@@ -1,4 +1,4 @@
-use crossterm::event::{read, Event, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers};
+use crossterm::event::{read, Event, Event::Key, KeyCode, KeyCode::Char, KeyEvent, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
 use std::io::stdout;
@@ -49,6 +49,7 @@ impl Editor {
                 Mode::Insert => self.evaluate_insert_mode(&event),
                 Mode::Visual => self.evaluate_visual_mode(&event),
                 //Mode::Command => self.evaluate_command_mode(&event),
+                Mode::Command => (), // TODO: not implemented yet
             }
         
             self.evaluate_event(&event);
@@ -69,6 +70,14 @@ impl Editor {
                     self.should_quit = true;
                 }
                 _ => (),
+            }
+        }
+    }
+    // TODO: placeholder so the crate compiles — only handles leaving visual mode.
+    fn evaluate_visual_mode(&mut self, event: &Event) {
+        if let Key(KeyEvent { code, .. }) = event {
+            if matches!(code, KeyCode::Esc) {
+                self.mode = Mode::Normal;
             }
         }
     }
@@ -100,6 +109,7 @@ impl Editor {
                 _ => (),
             }
         }
+    }
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
         if self.should_quit {
             Self::clear_screen()?;

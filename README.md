@@ -9,10 +9,11 @@ Repl should have 3 mode
   - insert
   - normal
   - visual
+  - command
+  - search
 
 Each mode has its own keybinding interpretations.
 
 
 ---
-
 

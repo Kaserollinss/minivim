@@ -5,11 +5,22 @@ use std::io::stdout;
 
 pub struct Editor {
     should_quit: bool,
+    mode: Mode,
+}
+
+enum Mode {
+    Normal,
+    Insert,
+    Visual,
+    Command
 }
 
 impl Editor {
     pub fn default() -> Self {
-        Editor { should_quit: false }
+        Editor { 
+            should_quit: false,
+            mode: Mode::Normal,
+        }
     }
     pub fn run(&mut self) {
         Self::initialize().unwrap();

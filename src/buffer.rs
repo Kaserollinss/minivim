@@ -19,7 +19,7 @@ impl Buffer {
 
     fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let path = path.as_ref();
-        let contents = fs::read_to_string(path)?;
+        let contents = fs::read_to_string(path)?; // '?' forces a return Err() if read_to_string breaks
         let lines: Vec<String> = contents.lines().map(String::from).collect();
         let lines = if lines.is_empty() { vec![String::new()] } else { lines };
 

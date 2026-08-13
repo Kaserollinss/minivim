@@ -44,6 +44,13 @@ impl Editor {
     fn repl(&mut self) -> Result<(), std::io::Error> {
         loop {
             let event = read()?;
+            match self.mode {
+                Mode::Normal => self.evaluate_normal_mode(&event),
+                Mode::Insert => self.evaluate_insert_mode(&event),
+                Mode::Visual => self.evaluate_visual_mode(&event),
+                //Mode::Command => self.evaluate_command_mode(&event),
+            }
+        
             self.evaluate_event(&event);
             self.refresh_screen()?;
             if self.should_quit {
@@ -65,6 +72,34 @@ impl Editor {
             }
         }
     }
+    fn evaluate_normal_mode(&mut self, event: &Event) {
+        if let Key(KeyEvent {
+            code, modifiers, ..
+        }) = event
+        {
+            match code {
+                Char('i') => {
+                    self.mode = Mode::Insert;
+                },
+                Char('v') => {
+                    self.mode = Mode::Visual;
+                },
+                _ => (),
+            }
+        }
+    }
+    fn evaluate_insert_mode(&mut self, event: &Event) {
+        if let Key(KeyEvent {   
+            code, modifiers, ..
+        }) = event
+        {
+            match code {
+                Char('q') if *modifiers == KeyModifiers::CONTROL => {
+                    self.mode = Mode::Normal;
+                }
+                _ => (),
+            }
+        }
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
         if self.should_quit {
             Self::clear_screen()?;

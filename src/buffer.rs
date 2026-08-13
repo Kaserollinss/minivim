@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-use std::{fs, io}
+use std::{fs, io};
 
 pub struct Buffer {
     lines: Vec<String>,

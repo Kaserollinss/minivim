@@ -6,10 +6,6 @@ use crossterm::terminal::{
 };
 use std::io::{stdout, Error, Write};
 
-/// Stateless wrapper around crossterm. The only module that knows crossterm exists.
-///
-/// Everything here queues into stdout's buffer rather than writing through, so a
-/// full repaint lands in one write. Call `flush` at the end of a frame.
 pub struct Terminal;
 
 impl Terminal {

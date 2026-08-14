@@ -48,7 +48,6 @@ impl Editor {
                 Mode::Normal => self.evaluate_normal_mode(&event),
                 Mode::Insert => self.evaluate_insert_mode(&event),
                 Mode::Visual => self.evaluate_visual_mode(&event),
-                //Mode::Command => self.evaluate_command_mode(&event),
                 Mode::Command => (), // TODO: not implemented yet
             }
         

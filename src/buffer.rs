@@ -9,7 +9,7 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    fn empty() -> Self {
+    pub fn empty() -> Self {
         Buffer {
             lines: vec![String::new()],
             filename: None,
@@ -17,7 +17,7 @@ impl Buffer {
         }
     }
 
-    fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let path = path.as_ref();
         let contents = fs::read_to_string(path)?; // '?' forces a return Err() if read_to_string breaks
         let lines: Vec<String> = contents.lines().map(String::from).collect();
@@ -28,5 +28,29 @@ impl Buffer {
             filename: Some(path.to_path_buf()),
             modified: false,
         })
+    }
+
+    pub fn line(&self, idx: usize) -> Option<&str> {
+        self.lines.get(idx).map(String::as_str)
+    }
+
+    pub fn line_len(&self, idx: usize) -> usize {
+        self.lines.get(idx).map_or(0, |l| l.chars().count())
+    }
+
+    pub fn len(&self) -> usize {
+        self.lines.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.lines.len() == 1 && self.lines[0].is_empty()
+    }
+
+    pub fn filename(&self) -> Option<&Path> {
+        self.filename.as_deref()
+    }
+
+    pub fn is_modified(&self) -> bool {
+        self.modified
     }
 }

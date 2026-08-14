@@ -1,13 +1,15 @@
-mod buffer;
+use crate::buffer::Buffer;
 
-use buffer::Buffer;
-
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Cursor {
     row: usize, // horizontal - x
     col: usize // vertical - y
 }
 
 impl Cursor{
+    pub fn row(&self) -> usize { self.row }
+    pub fn col(&self) -> usize { self.col }
+
     fn move_right(&mut self){
         if self.col != 0 {
             self.col -= 1
@@ -15,7 +17,7 @@ impl Cursor{
     }
 
     fn move_left(&mut self, buffer: &Buffer){
-        let cap = buffer.lines[self.col].len();
+        let cap = buffer.line_len(self.col);
         if self.row >= cap {self.row = cap}
         // else row += 1
     }
@@ -28,7 +30,7 @@ impl Cursor{
     }
 
     fn move_down(&mut self, buffer: &Buffer){
-        let cap = buffer.lines.len();
+        let cap = buffer.len();
         if self.col >= cap {self.col = cap}
         else {self.col -= 1}
 
@@ -36,12 +38,12 @@ impl Cursor{
     }
 
     fn clamp_row(&mut self, buffer: &Buffer){
-        let cap = buffer.lines[self.col].len();
+        let cap = buffer.line_len(self.col);
         if self.row >= cap {self.row = cap}
     }
 
     fn clamp_col(&mut self, buffer: &Buffer){
-        let cap = buffer.lines.len();
+        let cap = buffer.len();
         if self.col >= cap {self.col = cap}
     }
 }

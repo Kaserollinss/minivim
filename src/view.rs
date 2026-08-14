@@ -7,7 +7,6 @@ pub struct View {
     size: Size,
     /// Top-left buffer cell currently visible — i.e. the scroll position.
     offset: Position,
-    needs_redraw: bool,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -31,7 +30,6 @@ impl View {
                 height: height as usize,
             },
             offset: Position::default(),
-            needs_redraw: true,
         }
     }
 
@@ -40,14 +38,11 @@ impl View {
             width: width as usize,
             height: height as usize,
         };
-        self.needs_redraw = true;
     }
 
     /// Anything that changes what's on screen calls this; `render` is a no-op
     /// otherwise, so idle keys don't cause a repaint.
-    pub fn mark_dirty(&mut self) {
-        self.needs_redraw = true;
-    }
+    pub fn mark_dirty(&mut self) {}
 
     /// Rows available for buffer text — the last row is the status bar.
     fn text_height(&self) -> usize {
@@ -55,7 +50,7 @@ impl View {
     }
 
     pub fn render(&mut self, buffer: &Buffer, cursor: &Cursor) -> Result<(), Error> {
-        if !self.needs_redraw || self.size.height == 0 {
+        if self.size.height == 0 {
             return Ok(());
         }
 
@@ -77,7 +72,6 @@ impl View {
         Terminal::show_cursor()?;
         Terminal::flush()?;
 
-        self.needs_redraw = false;
         Ok(())
     }
 
@@ -139,7 +133,9 @@ impl View {
         let name = buffer
             .filename()
             .and_then(|p| p.file_name())
-            .map_or("[No Name]".to_string(), |n| n.to_string_lossy().into_owned());
+            .map_or("[No Name]".to_string(), |n| {
+                n.to_string_lossy().into_owned()
+            });
         let modified = if buffer.is_modified() { " [+]" } else { "" };
         let left = format!("{name}{modified} — {} lines", buffer.len());
         let right = format!("{}:{}", cursor.row() + 1, cursor.col() + 1);

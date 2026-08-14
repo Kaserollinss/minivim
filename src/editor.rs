@@ -1,6 +1,4 @@
 use crossterm::event::{read, Event, Event::Key, KeyCode, KeyCode::Char, KeyEvent, KeyModifiers};
-use crossterm::execute;
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
 use std::io::{self, stdout};
 use std::path::{Path};
 
@@ -72,6 +70,11 @@ pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
     }
 
     fn handle_key(&mut self, key: KeyEvent){
+        // temporary exit for now
+        if key.code == KeyCode::Char('q') && key.modifiers.contains(KeyModifiers::CONTROL)  {
+            self.should_quit = true;
+            return;
+        }
         if matches!(self.mode, Mode::Insert) {
             self.insert_key(key)
         } else {

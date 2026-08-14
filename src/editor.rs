@@ -1,18 +1,20 @@
-use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, read};
 use std::io::{self};
-use std::path::{Path};
+use std::path::Path;
 
 use crate::buffer::Buffer;
 use crate::cursor::Cursor;
-use crate::input::{Action, InsertKind, Motion, Operator, ParseResult, Parser, SimpleAction, Target};
-use crate::view::View;
+use crate::input::{
+    Action, InsertKind, Motion, Operator, ParseResult, Parser, SimpleAction, Target,
+};
 use crate::terminal::Terminal;
+use crate::view::View;
 
 pub struct Editor {
     buffer: Buffer,
     cursor: Cursor,
     view: View,
-    parser: Parser,    
+    parser: Parser,
     should_quit: bool,
     mode: Mode,
 }
@@ -21,12 +23,12 @@ pub enum Mode {
     Normal,
     Insert,
     Visual,
-    Command
+    Command,
 }
 
 impl Editor {
     pub fn default() -> Self {
-        Editor { 
+        Editor {
             buffer: Buffer::empty(),
             cursor: Cursor::default(),
             view: View::new(),
@@ -36,12 +38,12 @@ impl Editor {
         }
     }
 
-pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
-    Ok(Editor {
-        buffer: Buffer::from_file(path)?,
-        ..Editor::default()
-    })
-}
+    pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+        Ok(Editor {
+            buffer: Buffer::from_file(path)?,
+            ..Editor::default()
+        })
+    }
     pub fn run(&mut self) {
         Terminal::initialize();
         self.view.render(&self.buffer, &self.cursor);
@@ -55,12 +57,11 @@ pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         loop {
             let event = read()?;
             match event {
-                Event::Resize(w,h ) => self.view.resize(w, h),
+                Event::Resize(w, h) => self.view.resize(w, h),
                 Event::Key(key) => self.handle_key(key),
                 _ => {}
             }
 
-            
             if self.should_quit {
                 break;
             }
@@ -70,25 +71,31 @@ pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         Ok(())
     }
 
-    fn handle_key(&mut self, key: KeyEvent){
+    fn handle_key(&mut self, key: KeyEvent) {
         // temporary exit for now
-        if key.code == KeyCode::Char('q') && key.modifiers.contains(KeyModifiers::CONTROL)  {
+        if key.code == KeyCode::Char('q') && key.modifiers.contains(KeyModifiers::CONTROL) {
             self.should_quit = true;
             return;
         }
+
+        //ignore key up events
+        if key.kind == KeyEventKind::Release {
+            return;
+        }
+
         if matches!(self.mode, Mode::Insert) {
             self.insert_key(key)
         } else {
             match self.parser.feed(key) {
                 ParseResult::Complete(action) => self.apply(action),
                 ParseResult::Pending => {}
-                ParseResult::Invalid => {}   // later: bell, or clear a pending-command display
+                ParseResult::Invalid => {} // later: bell, or clear a pending-command display
             }
         }
     }
- 
+
     fn insert_key(&mut self, key: KeyEvent) {
-        if matches!(key.code, KeyCode::Esc){
+        if matches!(key.code, KeyCode::Esc) {
             self.mode = Mode::Normal;
             return;
         }
@@ -97,53 +104,48 @@ pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
             return;
         };
 
-        // This is not perfect and has quirks but for initial implementation im fine with it. 
+        // This is not perfect and has quirks but for initial implementation im fine with it.
         // some things to consider are inserting new lines or using arrow keys for nav in insert mode.
         let pos = self.cursor.location();
         self.buffer.insert_char_at(pos.row, pos.col, c);
         self.cursor.move_right(&self.buffer);
     }
 
-fn apply(&mut self, action: Action) {
-    match action {
-        Action::Move(motion, count) => self.handle_movement(motion, count),
-        Action::Operate { op, target } => self.handle_operation(op, target),
-        Action::EnterInsert(kind) => self.enter_insert(kind),
-        Action::EnterVisual => self.mode = Mode::Visual,
-        Action::EnterCommandLine => self.mode = Mode::Command,
-        Action::Simple(s) => self.handle_simple(s),
+    fn apply(&mut self, action: Action) {
+        match action {
+            Action::Move(motion, count) => self.handle_movement(motion, count),
+            Action::Operate { op, target } => self.handle_operation(op, target),
+            Action::EnterInsert(kind) => self.enter_insert(kind),
+            Action::EnterVisual => self.mode = Mode::Visual,
+            Action::EnterCommandLine => self.mode = Mode::Command,
+            Action::Simple(s) => self.handle_simple(s),
+        }
     }
-}
 
-    fn handle_movement(&mut self, motion: Motion, _count: usize){
+    fn handle_movement(&mut self, motion: Motion, _count: usize) {
         match motion {
             Motion::Left => self.cursor.move_left(),
             Motion::Right => self.cursor.move_right(&self.buffer),
-            Motion::Up => self.cursor.move_up(&self.buffer), 
+            Motion::Up => self.cursor.move_up(&self.buffer),
             Motion::Down => self.cursor.move_down(&self.buffer),
-            Motion::WordFwd => {},
-            Motion::WordEnd => {},
-            Motion::WordBack => {},
-            Motion::LineStart => {},
-            Motion::FirstNonBlank => {},
-            Motion::LineEnd => {},
-            Motion::FileStart => {},
-            Motion::FileEnd => {},
+            Motion::WordFwd => {}
+            Motion::WordEnd => {}
+            Motion::WordBack => {}
+            Motion::LineStart => {}
+            Motion::FirstNonBlank => {}
+            Motion::LineEnd => {}
+            Motion::FileStart => {}
+            Motion::FileEnd => {}
             //Motion::Find => {},
             _ => {}
         }
     }
 
-    fn handle_operation(&mut self, _op: Operator, _target: Target){
-    }
+    fn handle_operation(&mut self, _op: Operator, _target: Target) {}
 
-    fn enter_insert(&mut self, _kind: InsertKind){
-    }
+    fn enter_insert(&mut self, _kind: InsertKind) {}
 
-    fn handle_simple(&mut self, _s: SimpleAction){
-    }
-
-
+    fn handle_simple(&mut self, _s: SimpleAction) {}
 }
 
 #[cfg(test)]

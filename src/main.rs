@@ -2,6 +2,7 @@ mod buffer;
 mod cursor;
 mod editor;
 mod input;
+mod pos;
 mod terminal;
 mod view;
 

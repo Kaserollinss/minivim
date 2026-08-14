@@ -99,8 +99,8 @@ pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
 
         // This is not perfect and has quirks but for initial implementation im fine with it. 
         // some things to consider are inserting new lines or using arrow keys for nav in insert mode.
-        let (row, col) = self.cursor.location();
-        self.buffer.insert_char_at(row, col, c);
+        let pos = self.cursor.location();
+        self.buffer.insert_char_at(pos.row, pos.col, c);
         self.cursor.move_right(&self.buffer);
     }
 

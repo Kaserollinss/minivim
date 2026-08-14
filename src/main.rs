@@ -12,13 +12,13 @@ use editor::Editor;
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
-    let path:Option<PathBuf> = args.get(1).map(|s| PathBuf::from(s));
-    if let Some(path) = path {      
-        let mut editor = Editor::from_file(path);
+    let path: Option<PathBuf> = args.get(1).map(PathBuf::from);
+    if let Some(path) = path {
+        let editor = Editor::from_file(path);
         editor.unwrap().run();
     }
     if args.len() == 1 {
         let mut editor = Editor::default();
         editor.run()
-    }    //let mut editor = Editor::default();
+    } //let mut editor = Editor::default();
 }

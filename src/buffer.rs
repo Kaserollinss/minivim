@@ -39,7 +39,7 @@ impl Buffer {
         let line: Option<&mut String> = self.lines.get_mut(row);
         match line {
             Some(line) => line.insert(col, c),
-            None => return,
+            None => (),
         }
     }
 
@@ -105,7 +105,7 @@ impl Buffer {
     }
 
     pub fn is_empty(&self) -> bool {
-        return self.lines.len() == 1 && self.lines[0].is_empty();
+        self.lines.len() == 1 && self.lines[0].is_empty()
     }
 
     pub fn filename(&self) -> Option<&Path> {

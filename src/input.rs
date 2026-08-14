@@ -164,8 +164,8 @@ impl Parser {
         }
 
         // A repeated operator means "current line, linewise".
-        if let (Some(pending), Some(op)) = (self.operator, operator_for(c)) {
-            if pending == op {
+        if let (Some(pending), Some(op)) = (self.operator, operator_for(c))
+            && pending == op {
                 let count = self.effective_count();
                 self.reset();
                 return ParseResult::Complete(Action::Operate {
@@ -173,7 +173,6 @@ impl Parser {
                     target: Target::CurrentLine(count),
                 });
             }
-        }
 
         if let Some(m) = motion_for(c) {
             return self.motion(m);

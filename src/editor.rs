@@ -1,5 +1,5 @@
-use crossterm::event::{read, Event, Event::Key, KeyCode, KeyCode::Char, KeyEvent, KeyModifiers};
-use std::io::{self, stdout};
+use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyModifiers};
+use std::io::{self};
 use std::path::{Path};
 
 use crate::buffer::Buffer;
@@ -115,7 +115,7 @@ fn apply(&mut self, action: Action) {
     }
 }
 
-    fn handle_movement(&mut self, motion: Motion, count: usize){
+    fn handle_movement(&mut self, motion: Motion, _count: usize){
         match motion {
             Motion::Left => self.cursor.move_left(),
             Motion::Right => self.cursor.move_right(&self.buffer),
@@ -134,13 +134,13 @@ fn apply(&mut self, action: Action) {
         }
     }
 
-    fn handle_operation(&mut self, op: Operator, target: Target){
+    fn handle_operation(&mut self, _op: Operator, _target: Target){
     }
 
-    fn enter_insert(&mut self, kind: InsertKind){
+    fn enter_insert(&mut self, _kind: InsertKind){
     }
 
-    fn handle_simple(&mut self, s: SimpleAction){
+    fn handle_simple(&mut self, _s: SimpleAction){
     }
 
     

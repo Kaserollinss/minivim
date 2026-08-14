@@ -68,6 +68,6 @@ impl Cursor {
     }
 
     // Ignores punctuation 'W'
-    pub fn forward_word(&mut self, buffer: &Buffer){
+    pub fn forward_word(&mut self, _buffer: &Buffer){
     }
 }

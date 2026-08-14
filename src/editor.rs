@@ -143,5 +143,61 @@ fn apply(&mut self, action: Action) {
     fn handle_simple(&mut self, _s: SimpleAction){
     }
 
-    
+
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+    /// Editor over a known buffer, cursor at 0,0. No terminal touched.
+    fn editor_with(lines: &[&str]) -> Editor {
+        Editor {
+            buffer: Buffer::from_lines(lines),
+            ..Editor::default()
+        }
+    }
+
+    fn press(editor: &mut Editor, c: char) {
+        editor.handle_key(KeyEvent::new(KeyCode::Char(c), KeyModifiers::NONE));
+    }
+
+    #[test]
+    fn j_moves_cursor_down() {
+        let mut editor = editor_with(&["aaaa", "bb", "cccc"]);
+        assert_eq!(editor.cursor.row(), 0);
+        press(&mut editor, 'j');
+        assert_eq!(editor.cursor.row(), 1);
+    }
+
+    #[test]
+    fn k_at_top_stays_put() {
+        let mut editor = editor_with(&["aaaa", "bb", "cccc"]);
+        press(&mut editor, 'k');
+        assert_eq!(editor.cursor.row(), 0);
+    }
+
+    #[test]
+    fn j_at_bottom_stays_put() {
+        let mut editor = editor_with(&["aaaa", "bb", "cccc"]);
+        press(&mut editor, 'j');
+        press(&mut editor, 'j');
+        press(&mut editor, 'j'); // already on the last line
+        assert_eq!(editor.cursor.row(), 2);
+    }
+
+    #[test]
+    fn j_onto_shorter_line_clamps_column() {
+        let mut editor = editor_with(&["aaaa", "bb", "cccc"]);
+        // walk to the end-of-line slot on "aaaa" (col 4)
+        for _ in 0..4 {
+            press(&mut editor, 'l');
+        }
+        assert_eq!(editor.cursor.col(), 4);
+        // down onto "bb" (len 2) must clamp the column
+        press(&mut editor, 'j');
+        assert_eq!(editor.cursor.row(), 1);
+        assert_eq!(editor.cursor.col(), 2);
+    }
 }

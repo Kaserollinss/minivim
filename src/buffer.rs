@@ -35,6 +35,21 @@ impl Buffer {
         })
     }
 
+    /// Build a buffer from known lines, no file. Test seam.
+    #[cfg(test)]
+    pub(crate) fn from_lines(lines: &[&str]) -> Self {
+        let lines = if lines.is_empty() {
+            vec![String::new()]
+        } else {
+            lines.iter().map(|l| l.to_string()).collect()
+        };
+        Buffer {
+            lines,
+            filename: None,
+            modified: false,
+        }
+    }
+
     pub fn insert_char_at(&mut self, row: usize, col: usize, c: char) {
         let line: Option<&mut String> = self.lines.get_mut(row);
         match line {

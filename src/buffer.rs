@@ -30,6 +30,13 @@ impl Buffer {
         })
     }
 
+    pub fn insert_char_at(&self, row: usize, col: usize, c: char){
+        let temp_line = self.lines.get_mut(row);
+        self.lines.insert()
+    }
+
+    // Basic Buffer props
+
     pub fn line(&self, idx: usize) -> Option<&str> {
         self.lines.get(idx).map(String::as_str)
     }

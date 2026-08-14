@@ -6,7 +6,7 @@ use std::path::{Path};
 
 use crate::buffer::Buffer;
 use crate::cursor::Cursor;
-use crate::input::Parser;
+use crate::input::{Parser, ParseResult};
 use crate::view::View;
 use crate::terminal::Terminal;
 
@@ -47,6 +47,7 @@ pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
     pub fn run(&mut self) {
         Terminal::initialize();
         let result = self.repl();
+        self.view.render_farewell();
         Terminal::terminate();
         result.unwrap();
     }
@@ -54,77 +55,37 @@ pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
     fn repl(&mut self) -> Result<(), std::io::Error> {
         loop {
             let event = read()?;
-            match self.mode {
-                Mode::Normal => self.evaluate_normal_mode(&event),
-                Mode::Insert => self.evaluate_insert_mode(&event),
-                Mode::Visual => self.evaluate_visual_mode(&event),
-                Mode::Command => (), // TODO: not implemented yet
+            match event {
+                Event::Resize(w,h ) => self.view.resize(w, h),
+                Event::Key(key) => self.handle_key(key),
+                _ => {}
             }
 
-        
-            self.evaluate_event(&event);
-            self.refresh_screen()?;
+            
             if self.should_quit {
                 break;
             }
+
+            self.view.render(&self.buffer, &self.cursor)?;
         }
         Ok(())
     }
-    fn evaluate_event(&mut self, event: &Event) {
-        if let Key(KeyEvent {
-            code, modifiers, ..
-        }) = event
-        {
-            match code {
-                Char('q') if *modifiers == KeyModifiers::CONTROL => {
-                    self.should_quit = true;
-                }
-                _ => (),
+
+    fn handle_key(&mut self, key: KeyEvent){
+        if matches!(self.mode, Mode::Insert) {
+            self.insert_key(key)
+        } else {
+            match self.parser.feed(key) {
+                ParseResult::Complete(action) => self.apply(action),
+                ParseResult::Pending => {}
+                ParseResult::Invalid => {}   // later: bell, or clear a pending-command display
             }
         }
     }
-    // TODO: placeholder so the crate compiles — only handles leaving visual mode.
-    fn evaluate_visual_mode(&mut self, event: &Event) {
-        if let Key(KeyEvent { code, .. }) = event {
-            if matches!(code, KeyCode::Esc) {
-                self.mode = Mode::Normal;
-            }
-        }
-    }
-    fn evaluate_normal_mode(&mut self, event: &Event) {
-        if let Key(KeyEvent {
-            code, modifiers, ..
-        }) = event
-        {
-            match code {
-                Char('i') => {
-                    self.mode = Mode::Insert;
-                },
-                Char('v') => {
-                    self.mode = Mode::Visual;
-                },
-                _ => (),
-            }
-        }
-    }
-    fn evaluate_insert_mode(&mut self, event: &Event) {
-        if let Key(KeyEvent {   
-            code, modifiers, ..
-        }) = event
-        {
-            match code {
-                Char('q') if *modifiers == KeyModifiers::CONTROL => {
-                    self.mode = Mode::Normal;
-                }
-                _ => (),
-            }
-        }
-    }
-    fn refresh_screen(&self) -> Result<(), std::io::Error> {
-        if self.should_quit {
-            Terminal::terminate()?;
-            print!("Goodbye.\r\n");
-        }
-        Ok(())
+ 
+    fn insert_key(&mut self, key: KeyEvent) {
+        let (row, col) = self.cursor.location();
+        self.buffer.insert_char_at(row, col, c);
+        self.cursor
     }
 }

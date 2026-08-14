@@ -66,4 +66,8 @@ impl Cursor {
         self.clamp_row(buffer);
         self.clamp_col(buffer);
     }
+    
+    // Ignores punctuation 'W'
+    pub fn forward_word(&mut self, buffer: &Buffer){
+    }
 }

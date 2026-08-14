@@ -38,6 +38,12 @@ impl Buffer {
             }
     }
 
+    pub fn char_at(&self, row: usize, col: usize){
+        {
+            line.get(row)[col];
+        }
+    }
+
     // Basic Buffer props
 
     pub fn line(&self, idx: usize) -> Option<&str> {

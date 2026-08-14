@@ -116,6 +116,22 @@ fn apply(&mut self, action: Action) {
 }
 
     fn handle_movement(&mut self, motion: Motion, count: usize){
+        match motion {
+            Motion::Left => self.cursor.move_left(),
+            Motion::Right => self.cursor.move_right(&self.buffer),
+            Motion::Up => self.cursor.move_up(&self.buffer), 
+            Motion::Down => self.cursor.move_down(&self.buffer),
+            Motion::WordFwd => {},
+            Motion::WordEnd => {},
+            Motion::WordBack => {},
+            Motion::LineStart => {},
+            Motion::FirstNonBlank => {},
+            Motion::LineEnd => {},
+            Motion::FileStart => {},
+            Motion::FileEnd => {},
+            //Motion::Find => {},
+            _ => {}
+        }
     }
 
     fn handle_operation(&mut self, op: Operator, target: Target){

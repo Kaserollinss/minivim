@@ -6,7 +6,7 @@ use std::path::{Path};
 
 use crate::buffer::Buffer;
 use crate::cursor::Cursor;
-use crate::input::{Parser, ParseResult};
+use crate::input::{Parser, ParseResult, Action};
 use crate::view::View;
 use crate::terminal::Terminal;
 
@@ -84,8 +84,24 @@ pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
     }
  
     fn insert_key(&mut self, key: KeyEvent) {
+        if matches!(key.code, KeyCode::Esc){
+            self.mode = Mode::Normal;
+            return;
+        }
+
+        let KeyCode::Char(c) = key.code else {
+            return;
+        };
+
+        // This is not perfect and has quirks but for initial implementation im fine with it. 
+        // some things to consider are inserting new lines or using arrow keys for nav in insert mode.
         let (row, col) = self.cursor.location();
         self.buffer.insert_char_at(row, col, c);
-        self.cursor
+        self.cursor.move_right(&self.buffer);
+    }
+
+    fn apply(&self, action: Action){
+        // Empty just for compililation sake
+        return;
     }
 }

@@ -21,7 +21,8 @@ impl Buffer {
         let path = path.as_ref();
         let contents = fs::read_to_string(path)?; // '?' forces a return Err() if read_to_string breaks
         let lines: Vec<String> = contents.lines().map(String::from).collect();
-        let lines = if lines.is_empty() { vec![String::new()] } else { lines };
+        let lines = if lines.is_empty() { vec![String::new()] } 
+        else { lines };
 
         Ok(Buffer {
             lines,
@@ -30,9 +31,12 @@ impl Buffer {
         })
     }
 
-    pub fn insert_char_at(&self, row: usize, col: usize, c: char){
-        let temp_line = self.lines.get_mut(row);
-        self.lines.insert()
+    pub fn insert_char_at(&mut self, row: usize, col: usize, c: char){
+        let line: Option<&mut String> = self.lines.get_mut(row);
+        match line {
+            Some(line) => line.insert(col, c),
+            None => { return }
+            }
     }
 
     // Basic Buffer props

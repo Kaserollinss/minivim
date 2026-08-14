@@ -4,7 +4,7 @@ use std::path::{Path};
 
 use crate::buffer::Buffer;
 use crate::cursor::Cursor;
-use crate::input::{Parser, ParseResult, Action};
+use crate::input::{Action, InsertKind, Motion, Operator, ParseResult, Parser, SimpleAction, Target};
 use crate::view::View;
 use crate::terminal::Terminal;
 
@@ -17,7 +17,7 @@ pub struct Editor {
     mode: Mode,
 }
 
-enum Mode {
+pub enum Mode {
     Normal,
     Insert,
     Visual,
@@ -104,8 +104,28 @@ pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         self.cursor.move_right(&self.buffer);
     }
 
-    fn apply(&self, action: Action){
-        // Empty just for compililation sake
-        return;
+fn apply(&mut self, action: Action) {
+    match action {
+        Action::Move(motion, count) => self.handle_movement(motion, count),
+        Action::Operate { op, target } => self.handle_operation(op, target),
+        Action::EnterInsert(kind) => self.enter_insert(kind),
+        Action::EnterVisual => self.mode = Mode::Visual,
+        Action::EnterCommandLine => self.mode = Mode::Command,
+        Action::Simple(s) => self.handle_simple(s),
     }
+}
+
+    fn handle_movement(&mut self, motion: Motion, count: usize){
+    }
+
+    fn handle_operation(&mut self, op: Operator, target: Target){
+    }
+
+    fn enter_insert(&mut self, kind: InsertKind){
+    }
+
+    fn handle_simple(&mut self, s: SimpleAction){
+    }
+
+    
 }

@@ -1,5 +1,7 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+use crate::walker::Direction;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Operator {
     Delete,
@@ -13,20 +15,30 @@ pub enum Motion {
     Right,
     Up,
     Down,
-    WordFwd,
-    WordEnd,
-    WordBack,
-    LineStart,
+    Word {
+        direction: Direction,
+        location: MotionLocation,
+        big: bool,
+    },
+    Line {
+        location: MotionLocation,
+    },
     FirstNonBlank,
-    LineEnd,
-    FileStart,
-    FileEnd,
+    File {
+        location: MotionLocation,
+    },
     /// f/t/F/T — `till` stops before the target, `backward` searches left.
     Find {
         target: char,
         till: bool,
         backward: bool,
     },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MotionLocation {
+    Start,
+    End,
 }
 
 /// How an operator consumes the span a motion produces. `dw` and `de` differ
@@ -41,10 +53,19 @@ pub enum MotionKind {
 impl Motion {
     pub fn kind(self) -> MotionKind {
         match self {
-            Motion::Up | Motion::Down | Motion::FileStart | Motion::FileEnd => {
-                MotionKind::Linewise
+            // linewise
+            Motion::Up | Motion::Down | Motion::File { .. } => MotionKind::Linewise,
+
+            // inclusive
+            Motion::Word {
+                location: MotionLocation::End,
+                ..
             }
-            Motion::WordEnd | Motion::LineEnd => MotionKind::Inclusive,
+            | Motion::Line {
+                location: MotionLocation::End,
+            } => MotionKind::Inclusive,
+
+            // exclusive
             Motion::Find { till: false, .. } => MotionKind::Inclusive,
             _ => MotionKind::Exclusive,
         }
@@ -165,14 +186,15 @@ impl Parser {
 
         // A repeated operator means "current line, linewise".
         if let (Some(pending), Some(op)) = (self.operator, operator_for(c))
-            && pending == op {
-                let count = self.effective_count();
-                self.reset();
-                return ParseResult::Complete(Action::Operate {
-                    op: pending,
-                    target: Target::CurrentLine(count),
-                });
-            }
+            && pending == op
+        {
+            let count = self.effective_count();
+            self.reset();
+            return ParseResult::Complete(Action::Operate {
+                op: pending,
+                target: Target::CurrentLine(count),
+            });
+        }
 
         if let Some(m) = motion_for(c) {
             return self.motion(m);
@@ -282,13 +304,31 @@ fn motion_for(c: char) -> Option<Motion> {
         'l' => Some(Motion::Right),
         'k' => Some(Motion::Up),
         'j' => Some(Motion::Down),
-        'w' => Some(Motion::WordFwd),
-        'e' => Some(Motion::WordEnd),
-        'b' => Some(Motion::WordBack),
-        '0' => Some(Motion::LineStart),
+        'w' => Some(Motion::Word {
+            direction: Direction::Forward,
+            location: MotionLocation::Start,
+            big: false,
+        }),
+        'e' => Some(Motion::Word {
+            direction: Direction::Forward,
+            location: MotionLocation::End,
+            big: false,
+        }),
+        'b' => Some(Motion::Word {
+            direction: Direction::Backward,
+            location: MotionLocation::Start,
+            big: false,
+        }),
+        '0' => Some(Motion::Line {
+            location: MotionLocation::Start,
+        }),
         '^' => Some(Motion::FirstNonBlank),
-        '$' => Some(Motion::LineEnd),
-        'G' => Some(Motion::FileEnd),
+        '$' => Some(Motion::Line {
+            location: MotionLocation::End,
+        }),
+        'G' => Some(Motion::File {
+            location: MotionLocation::End,
+        }),
         _ => None,
     }
 }
@@ -296,6 +336,14 @@ fn motion_for(c: char) -> Option<Motion> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::walker::Direction;
+
+    /// `w` — the motion `w b e` tests key off of.
+    const WORD_FWD: Motion = Motion::Word {
+        direction: Direction::Forward,
+        location: MotionLocation::Start,
+        big: false,
+    };
 
     fn press(p: &mut Parser, keys: &str) -> ParseResult {
         let mut result = ParseResult::Pending;
@@ -308,25 +356,37 @@ mod tests {
     #[test]
     fn bare_motion_has_count_one() {
         let mut p = Parser::new();
-        assert_eq!(press(&mut p, "w"), ParseResult::Complete(Action::Move(Motion::WordFwd, 1)));
+        assert_eq!(
+            press(&mut p, "w"),
+            ParseResult::Complete(Action::Move(WORD_FWD, 1))
+        );
     }
 
     #[test]
     fn counted_motion() {
         let mut p = Parser::new();
-        assert_eq!(press(&mut p, "12j"), ParseResult::Complete(Action::Move(Motion::Down, 12)));
+        assert_eq!(
+            press(&mut p, "12j"),
+            ParseResult::Complete(Action::Move(Motion::Down, 12))
+        );
     }
 
     #[test]
     fn zero_is_a_motion_without_a_count() {
         let mut p = Parser::new();
-        assert_eq!(press(&mut p, "0"), ParseResult::Complete(Action::Move(Motion::LineStart, 1)));
+        assert_eq!(
+            press(&mut p, "0"),
+            ParseResult::Complete(Action::Move(Motion::Line { location: MotionLocation::Start }, 1))
+        );
     }
 
     #[test]
     fn zero_is_a_digit_within_a_count() {
         let mut p = Parser::new();
-        assert_eq!(press(&mut p, "10k"), ParseResult::Complete(Action::Move(Motion::Up, 10)));
+        assert_eq!(
+            press(&mut p, "10k"),
+            ParseResult::Complete(Action::Move(Motion::Up, 10))
+        );
     }
 
     #[test]
@@ -342,7 +402,7 @@ mod tests {
             press(&mut p, "dw"),
             ParseResult::Complete(Action::Operate {
                 op: Operator::Delete,
-                target: Target::Motion(Motion::WordFwd, 1),
+                target: Target::Motion(WORD_FWD, 1),
             })
         );
     }
@@ -354,7 +414,7 @@ mod tests {
             press(&mut p, "2d3w"),
             ParseResult::Complete(Action::Operate {
                 op: Operator::Delete,
-                target: Target::Motion(Motion::WordFwd, 6),
+                target: Target::Motion(WORD_FWD, 6),
             })
         );
     }
@@ -385,7 +445,11 @@ mod tests {
         assert_eq!(
             press(&mut p, "x"),
             ParseResult::Complete(Action::Move(
-                Motion::Find { target: 'x', till: false, backward: false },
+                Motion::Find {
+                    target: 'x',
+                    till: false,
+                    backward: false
+                },
                 1
             ))
         );
@@ -396,6 +460,9 @@ mod tests {
         let mut p = Parser::new();
         press(&mut p, "2d");
         p.feed(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
-        assert_eq!(press(&mut p, "w"), ParseResult::Complete(Action::Move(Motion::WordFwd, 1)));
+        assert_eq!(
+            press(&mut p, "w"),
+            ParseResult::Complete(Action::Move(WORD_FWD, 1))
+        );
     }
 }

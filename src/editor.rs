@@ -128,16 +128,12 @@ impl Editor {
             Motion::Right => self.cursor.move_right(&self.buffer),
             Motion::Up => self.cursor.move_up(&self.buffer),
             Motion::Down => self.cursor.move_down(&self.buffer),
-            Motion::WordFwd => {}
-            Motion::WordEnd => {}
-            Motion::WordBack => {}
-            Motion::LineStart => {}
+            // not implemented yet
+            Motion::Word { .. } => {}
+            Motion::Line { .. } => {}
             Motion::FirstNonBlank => {}
-            Motion::LineEnd => {}
-            Motion::FileStart => {}
-            Motion::FileEnd => {}
-            //Motion::Find => {},
-            _ => {}
+            Motion::File { .. } => {}
+            Motion::Find { .. } => {}
         }
     }
 

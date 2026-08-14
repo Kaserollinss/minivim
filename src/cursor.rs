@@ -9,6 +9,14 @@ use crate::pos::Pos;
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Cursor {
     pos: Pos,
+    class: Option<CharClass>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CharClass {
+    WhiteSpace,
+    Word,
+    Punctuation,
 }
 
 impl Cursor {
@@ -68,6 +76,46 @@ impl Cursor {
     }
 
     // Ignores punctuation 'W'
-    pub fn forward_word(&mut self, _buffer: &Buffer){
+    pub fn forward_word(&mut self, _buffer: &Buffer) {}
+
+    fn classify(&self, c: char, big: bool) -> CharClass {
+        match c {
+            c if c.is_whitespace() => CharClass::WhiteSpace,
+            c if c.is_alphanumeric() || big => CharClass::Word,
+            _ => CharClass::Punctuation,
+        }
+    }
+
+    fn is_word_start(&self, buffer: &Buffer, big: bool) -> bool {
+        // non whitespace
+        // if big, char to left is whitespace
+        // else char to left is different class
+        if matches!(self.class, Some(CharClass::WhiteSpace)) {
+            return false;
+        }
+
+        let prev_pos = buffer.prev_pos(self.pos);
+        match prev_pos {
+            Some(pos) => {
+                let next_char = buffer.char_at(pos);
+                Some(self.classify(next_char.unwrap(), big)) != self.class
+            }
+            None => return false,
+        }
+    }
+
+    fn is_word_end(&self, buffer: &Buffer, big: bool) -> bool {
+        if matches!(self.class, Some(CharClass::WhiteSpace)) {
+            return false;
+        }
+
+        let next_pos = buffer.next_pos(self.pos);
+        match next_pos {
+            Some(pos) => {
+                let next_char = buffer.char_at(pos);
+                Some(self.classify(next_char.unwrap(), big)) != self.class
+            }
+            None => return false,
+        }
     }
 }

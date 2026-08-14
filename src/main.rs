@@ -5,6 +5,7 @@ mod input;
 mod pos;
 mod terminal;
 mod view;
+mod walker;
 
 use std::path::PathBuf;
 

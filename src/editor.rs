@@ -44,6 +44,7 @@ pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
 }
     pub fn run(&mut self) {
         Terminal::initialize();
+        self.view.render(&self.buffer, &self.cursor);
         let result = self.repl();
         self.view.render_farewell();
         Terminal::terminate();

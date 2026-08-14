@@ -76,7 +76,7 @@ impl Cursor {
     }
 
     // Ignores punctuation 'W'
-    pub fn forward_word(&mut self, _buffer: &Buffer) {}
+    //pub fn forward_word(&mut self, _buffer: &Buffer) {}
 
     fn classify(&self, c: char, big: bool) -> CharClass {
         match c {

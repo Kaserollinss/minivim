@@ -1,9 +1,20 @@
 use crossterm::event::{read, Event, Event::Key, KeyCode, KeyCode::Char, KeyEvent, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
-use std::io::stdout;
+use std::io::{self, stdout};
+use std::path::{Path};
+
+use crate::buffer::Buffer;
+use crate::cursor::Cursor;
+use crate::input::Parser;
+use crate::view::View;
+use crate::terminal::Terminal;
 
 pub struct Editor {
+    buffer: Buffer,
+    cursor: Cursor,
+    view: View,
+    parser: Parser,    
     should_quit: bool,
     mode: Mode,
 }
@@ -18,27 +29,26 @@ enum Mode {
 impl Editor {
     pub fn default() -> Self {
         Editor { 
+            buffer: Buffer::empty(),
+            cursor: Cursor::default(),
+            view: View::new(),
+            parser: Parser::new(),
             should_quit: false,
             mode: Mode::Normal,
         }
     }
-    pub fn run(&mut self) {
-        Self::initialize().unwrap();
-        let result = self.repl();
-        Self::terminate().unwrap();
-        result.unwrap();
-    }
 
-    fn initialize() -> Result<(), std::io::Error> {
-        enable_raw_mode()?;
-        Self::clear_screen()
-    }
-    fn terminate() -> Result<(), std::io::Error> {
-        disable_raw_mode()
-    }
-    fn clear_screen() -> Result<(), std::io::Error> {
-        let mut stdout = stdout();
-        execute!(stdout, Clear(ClearType::All))
+pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+    Ok(Editor {
+        buffer: Buffer::from_file(path)?,
+        ..Editor::default()
+    })
+}
+    pub fn run(&mut self) {
+        Terminal::initialize();
+        let result = self.repl();
+        Terminal::terminate();
+        result.unwrap();
     }
 
     fn repl(&mut self) -> Result<(), std::io::Error> {
@@ -50,6 +60,7 @@ impl Editor {
                 Mode::Visual => self.evaluate_visual_mode(&event),
                 Mode::Command => (), // TODO: not implemented yet
             }
+
         
             self.evaluate_event(&event);
             self.refresh_screen()?;
@@ -111,7 +122,7 @@ impl Editor {
     }
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
         if self.should_quit {
-            Self::clear_screen()?;
+            Terminal::terminate()?;
             print!("Goodbye.\r\n");
         }
         Ok(())

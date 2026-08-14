@@ -7,6 +7,12 @@ pub struct Cursor {
 }
 
 impl Cursor{
+    pub fn default() -> Self {
+        Cursor {
+            row: 0,
+            col: 0
+        }
+    }
     pub fn row(&self) -> usize { self.row }
     pub fn col(&self) -> usize { self.col }
 

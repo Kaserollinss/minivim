@@ -58,6 +58,28 @@ impl Buffer {
         }
     }
 
+    pub fn remove_char_at(&mut self, pos: Pos) {
+        let line = self.lines.get_mut(pos.row);
+        match line {
+            Some(line) => {
+                line.remove(pos.col);
+            }
+            None => (),
+        }
+    }
+
+    pub fn new_line_above(&mut self, row: usize) {
+        if self.len() > row {
+            self.lines.insert(row, String::new())
+        }
+    }
+
+    pub fn new_line_below(&mut self, row: usize) {
+        if self.len() > row {
+            self.lines.insert(row + 1, String::new())
+        }
+    }
+
     pub fn char_at(&self, pos: Pos) -> Option<char> {
         let line = self.line(pos.row)?; // None if the row doesn't exist
         let len = line.chars().count();

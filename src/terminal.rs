@@ -1,10 +1,8 @@
-use crossterm::cursor::{Hide, MoveTo, Show};
+use crossterm::cursor::{Hide, MoveTo, SetCursorStyle, Show};
 use crossterm::queue;
 use crossterm::style::Print;
-use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, size, Clear, ClearType,
-};
-use std::io::{stdout, Error, Write};
+use crossterm::terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size};
+use std::io::{Error, Write, stdout};
 
 pub struct Terminal;
 
@@ -13,6 +11,7 @@ impl Terminal {
         enable_raw_mode()?;
         Self::clear_screen()?;
         Self::move_to(0, 0)?;
+        Self::set_cursor_block();
         Self::flush()
     }
 
@@ -44,6 +43,14 @@ impl Terminal {
 
     pub fn print(text: &str) -> Result<(), Error> {
         queue!(stdout(), Print(text))
+    }
+
+    pub fn set_cursor_block() -> Result<(), Error> {
+        queue!(stdout(), SetCursorStyle::SteadyBlock)
+    }
+
+    pub fn set_cursor_vert() -> Result<(), Error> {
+        queue!(stdout(), SetCursorStyle::BlinkingBar)
     }
 
     /// (columns, rows)

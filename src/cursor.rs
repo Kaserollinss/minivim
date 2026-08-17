@@ -55,6 +55,10 @@ impl Cursor {
         self.restore_col(buffer);
     }
 
+    pub fn go_to_new_line_at(&mut self, row: usize) {
+        self.pos = Pos { row, col: 0 };
+    }
+
     /// Honor desired_col on the current line, clamping to what the line allows.
     fn restore_col(&mut self, buffer: &Buffer) {
         self.pos.col = self.desired_col.min(buffer.line_len(self.pos.row));

@@ -84,7 +84,7 @@ impl Editor {
         }
 
         if matches!(self.mode, Mode::Insert) {
-            self.insert_key(key)
+            self.insert_key(key);
         } else {
             match self.parser.feed(key) {
                 ParseResult::Complete(action) => self.apply(action),
@@ -95,20 +95,65 @@ impl Editor {
     }
 
     fn insert_key(&mut self, key: KeyEvent) {
+        let pos = self.cursor.location();
+
         if matches!(key.code, KeyCode::Esc) {
             self.mode = Mode::Normal;
             return;
         }
 
-        let KeyCode::Char(c) = key.code else {
-            return;
-        };
+        match key {
+            KeyEvent {
+                code: KeyCode::Backspace,
+                ..
+            } => {
+                //Broken. Time to actually figure out the byte vs char index stuff
+                self.buffer.remove_char_at(pos);
+            }
+            KeyEvent {
+                code: KeyCode::Delete,
+                ..
+            } => {}
+            KeyEvent {
+                code: KeyCode::Enter,
+                ..
+            } => {
+                self.buffer.new_line_below(pos.row);
+                self.cursor.go_to_new_line_at(pos.row + 1);
+            }
+            KeyEvent {
+                code: KeyCode::Left,
+                ..
+            } => self.cursor.move_left(),
+            KeyEvent {
+                code: KeyCode::Right,
+                ..
+            } => self.cursor.move_right(&self.buffer),
 
-        // This is not perfect and has quirks but for initial implementation im fine with it.
-        // some things to consider are inserting new lines or using arrow keys for nav in insert mode.
-        let pos = self.cursor.location();
-        self.buffer.insert_char_at(pos.row, pos.col, c);
-        self.cursor.move_right(&self.buffer);
+            KeyEvent {
+                code: KeyCode::Up, ..
+            } => self.cursor.move_up(&self.buffer),
+
+            KeyEvent {
+                code: KeyCode::Down,
+                ..
+            } => self.cursor.move_down(&self.buffer),
+            KeyEvent {
+                code: KeyCode::Esc, ..
+            } => {
+                self.mode = Mode::Normal;
+                Terminal::set_cursor_block();
+            }
+
+            _ => {
+                let KeyCode::Char(c) = key.code else {
+                    return;
+                };
+
+                self.buffer.insert_char_at(pos.row, pos.col, c);
+                self.cursor.move_right(&self.buffer);
+            }
+        }
     }
 
     fn apply(&mut self, action: Action) {
@@ -139,7 +184,19 @@ impl Editor {
 
     fn handle_operation(&mut self, _op: Operator, _target: Target) {}
 
-    fn enter_insert(&mut self, _kind: InsertKind) {}
+    fn enter_insert(&mut self, kind: InsertKind) {
+        self.mode = Mode::Insert;
+        Terminal::set_cursor_vert();
+
+        match kind {
+            InsertKind::Before => {}
+            InsertKind::After => {}
+            InsertKind::LineStart => {}
+            InsertKind::LineEnd => {}
+            InsertKind::OpenBelow => {}
+            InsertKind::OpenAbove => {}
+        }
+    }
 
     fn handle_simple(&mut self, _s: SimpleAction) {}
 }

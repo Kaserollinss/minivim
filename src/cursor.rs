@@ -55,9 +55,11 @@ impl Cursor {
         self.restore_col(buffer);
     }
 
-    pub fn go_to_new_line_at(&mut self, row: usize) {
-        self.pos = Pos { row, col: 0 };
+    pub fn go_to(&mut self, pos: Pos) {
+        self.pos = pos;
     }
+
+    pub fn forward_word(&mut self, buffer: &Buffer, is_big: bool) {}
 
     /// Honor desired_col on the current line, clamping to what the line allows.
     fn restore_col(&mut self, buffer: &Buffer) {

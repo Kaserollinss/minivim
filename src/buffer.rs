@@ -68,17 +68,17 @@ impl Buffer {
         }
     }
 
-    pub fn new_line_above(&mut self, row: usize) {
+    pub fn new_line_at(&mut self, row: usize) {
         if self.len() > row {
             self.lines.insert(row, String::new())
         }
     }
 
-    pub fn new_line_below(&mut self, row: usize) {
-        if self.len() > row {
-            self.lines.insert(row + 1, String::new())
-        }
-    }
+    // pub fn new_line_below(&mut self, row: usize) {
+    //     if self.len() > row {
+    //         self.lines.insert(row + 1, String::new())
+    //     }
+    // }
 
     pub fn char_at(&self, pos: Pos) -> Option<char> {
         let line = self.line(pos.row)?; // None if the row doesn't exist

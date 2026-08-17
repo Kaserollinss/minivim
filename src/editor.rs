@@ -7,6 +7,7 @@ use crate::cursor::Cursor;
 use crate::input::{
     Action, InsertKind, Motion, Operator, ParseResult, Parser, SimpleAction, Target,
 };
+use crate::pos::Pos;
 use crate::terminal::Terminal;
 use crate::view::View;
 
@@ -117,10 +118,7 @@ impl Editor {
             KeyEvent {
                 code: KeyCode::Enter,
                 ..
-            } => {
-                self.buffer.new_line_below(pos.row);
-                self.cursor.go_to_new_line_at(pos.row + 1);
-            }
+            } => self.new_line_below(pos.row),
             KeyEvent {
                 code: KeyCode::Left,
                 ..
@@ -167,24 +165,34 @@ impl Editor {
         }
     }
 
-    fn handle_movement(&mut self, motion: Motion, _count: usize) {
+    fn handle_movement(&mut self, motion: Motion, count: usize) {
         match motion {
             Motion::Left => self.cursor.move_left(),
             Motion::Right => self.cursor.move_right(&self.buffer),
             Motion::Up => self.cursor.move_up(&self.buffer),
             Motion::Down => self.cursor.move_down(&self.buffer),
             // not implemented yet
-            Motion::Word { .. } => {}
-            Motion::Line { .. } => {}
+            Motion::Word { .. } => self.handle_word_movement(motion, count),
+            Motion::Line { .. } => self.handle_line_movement(motion, count),
             Motion::FirstNonBlank => {}
-            Motion::File { .. } => {}
-            Motion::Find { .. } => {}
+            Motion::File { .. } => self.handle_file_movement(motion, count),
+            Motion::Find { .. } => self.handle_find_movement(motion, count),
         }
     }
 
     fn handle_operation(&mut self, _op: Operator, _target: Target) {}
 
+    fn handle_word_movement(&mut self, motion: Motion, _count: usize) {
+        match motion {
+            _ => {}
+        }
+    }
+    fn handle_line_movement(&mut self, motion: Motion, _count: usize) {}
+    fn handle_file_movement(&mut self, motion: Motion, _count: usize) {}
+    fn handle_find_movement(&mut self, motion: Motion, _count: usize) {}
+
     fn enter_insert(&mut self, kind: InsertKind) {
+        let pos = self.cursor.location();
         self.mode = Mode::Insert;
         Terminal::set_cursor_vert();
 
@@ -193,12 +201,25 @@ impl Editor {
             InsertKind::After => {}
             InsertKind::LineStart => {}
             InsertKind::LineEnd => {}
-            InsertKind::OpenBelow => {}
-            InsertKind::OpenAbove => {}
+            InsertKind::OpenBelow => self.new_line_below(pos.row),
+            InsertKind::OpenAbove => self.new_line_above(pos.row),
         }
     }
 
     fn handle_simple(&mut self, _s: SimpleAction) {}
+
+    fn go_to_new_line_at(&mut self, row: usize) {
+        self.buffer.new_line_at(row);
+        self.cursor.go_to(Pos::new(row, 0));
+    }
+
+    fn new_line_above(&mut self, row: usize) {
+        self.go_to_new_line_at(row);
+    }
+
+    fn new_line_below(&mut self, row: usize) {
+        self.go_to_new_line_at(row + 1);
+    }
 }
 
 #[cfg(test)]

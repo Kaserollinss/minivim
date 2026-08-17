@@ -10,6 +10,7 @@ use crate::pos::Pos;
 pub struct Cursor {
     pos: Pos,
     class: Option<CharClass>,
+    desired_col: usize, // The col we want on vertical moves; honored when the line allows it
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,24 +33,31 @@ impl Cursor {
 
     pub fn move_left(&mut self) {
         self.pos.col = self.pos.col.saturating_sub(1);
+        self.desired_col = self.pos.col;
     }
 
     pub fn move_right(&mut self, buffer: &Buffer) {
         if self.pos.col < buffer.line_len(self.pos.row) {
             self.pos.col += 1;
         }
+        self.desired_col = self.pos.col;
     }
 
     pub fn move_up(&mut self, buffer: &Buffer) {
         self.pos.row = self.pos.row.saturating_sub(1);
-        self.clamp_col(buffer);
+        self.restore_col(buffer);
     }
 
     pub fn move_down(&mut self, buffer: &Buffer) {
         if self.pos.row + 1 < buffer.len() {
             self.pos.row += 1;
         }
-        self.clamp_col(buffer);
+        self.restore_col(buffer);
+    }
+
+    /// Honor desired_col on the current line, clamping to what the line allows.
+    fn restore_col(&mut self, buffer: &Buffer) {
+        self.pos.col = self.desired_col.min(buffer.line_len(self.pos.row));
     }
 
     /// Keep `row` within the buffer.

@@ -1,5 +1,6 @@
 use crate::buffer::Buffer;
 use crate::pos::Pos;
+use crate::walker::Direction;
 
 /// Cursor position in *buffer* coordinates, never screen coordinates.
 ///
@@ -59,7 +60,9 @@ impl Cursor {
         self.pos = pos;
     }
 
-    pub fn forward_word(&mut self, buffer: &Buffer, is_big: bool) {}
+    pub fn to_word_end(mut self, buffer: &Buffer, direction: Direction, is_big: bool) {}
+
+    pub fn to_word_start(mut self, buffer: &Buffer, direction: Direction, is_big: bool) {}
 
     /// Honor desired_col on the current line, clamping to what the line allows.
     fn restore_col(&mut self, buffer: &Buffer) {
@@ -91,45 +94,4 @@ impl Cursor {
 
     // Ignores punctuation 'W'
     //pub fn forward_word(&mut self, _buffer: &Buffer) {}
-
-    fn classify(&self, c: char, big: bool) -> CharClass {
-        match c {
-            c if c.is_whitespace() => CharClass::WhiteSpace,
-            c if c.is_alphanumeric() || big => CharClass::Word,
-            _ => CharClass::Punctuation,
-        }
-    }
-
-    fn is_word_start(&self, buffer: &Buffer, big: bool) -> bool {
-        // non whitespace
-        // if big, char to left is whitespace
-        // else char to left is different class
-        if matches!(self.class, Some(CharClass::WhiteSpace)) {
-            return false;
-        }
-
-        let prev_pos = buffer.prev_pos(self.pos);
-        match prev_pos {
-            Some(pos) => {
-                let next_char = buffer.char_at(pos);
-                Some(self.classify(next_char.unwrap(), big)) != self.class
-            }
-            None => return false,
-        }
-    }
-
-    fn is_word_end(&self, buffer: &Buffer, big: bool) -> bool {
-        if matches!(self.class, Some(CharClass::WhiteSpace)) {
-            return false;
-        }
-
-        let next_pos = buffer.next_pos(self.pos);
-        match next_pos {
-            Some(pos) => {
-                let next_char = buffer.char_at(pos);
-                Some(self.classify(next_char.unwrap(), big)) != self.class
-            }
-            None => return false,
-        }
-    }
 }

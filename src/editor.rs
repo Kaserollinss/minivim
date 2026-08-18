@@ -98,59 +98,27 @@ impl Editor {
     fn insert_key(&mut self, key: KeyEvent) {
         let pos = self.cursor.location();
 
-        if matches!(key.code, KeyCode::Esc) {
-            self.mode = Mode::Normal;
-            return;
-        }
-
-        match key {
-            KeyEvent {
-                code: KeyCode::Backspace,
-                ..
-            } => {
-                //Broken. Time to actually figure out the byte vs char index stuff
-                self.buffer.remove_char_at(pos);
-            }
-            KeyEvent {
-                code: KeyCode::Delete,
-                ..
-            } => {}
-            KeyEvent {
-                code: KeyCode::Enter,
-                ..
-            } => self.new_line_below(pos.row),
-            KeyEvent {
-                code: KeyCode::Left,
-                ..
-            } => self.cursor.move_left(),
-            KeyEvent {
-                code: KeyCode::Right,
-                ..
-            } => self.cursor.move_right(&self.buffer),
-
-            KeyEvent {
-                code: KeyCode::Up, ..
-            } => self.cursor.move_up(&self.buffer),
-
-            KeyEvent {
-                code: KeyCode::Down,
-                ..
-            } => self.cursor.move_down(&self.buffer),
-            KeyEvent {
-                code: KeyCode::Esc, ..
-            } => {
+        match key.code {
+            KeyCode::Esc => {
                 self.mode = Mode::Normal;
                 Terminal::set_cursor_block();
             }
-
-            _ => {
-                let KeyCode::Char(c) = key.code else {
-                    return;
-                };
-
+            KeyCode::Backspace => {
+                //Broken. Time to actually figure out the byte vs char index stuff
+                self.buffer.remove_char_at(pos);
+            }
+            KeyCode::Delete => {}
+            KeyCode::Enter => self.new_line_below(pos.row),
+            KeyCode::Left => self.cursor.move_left(),
+            KeyCode::Right => self.cursor.move_right(&self.buffer),
+            KeyCode::Up => self.cursor.move_up(&self.buffer),
+            KeyCode::Down => self.cursor.move_down(&self.buffer),
+            // Ctrl-chords arrive as plain `Char`s; typing one must not insert its letter.
+            KeyCode::Char(c) if !key.modifiers.contains(KeyModifiers::CONTROL) => {
                 self.buffer.insert_char_at(pos.row, pos.col, c);
                 self.cursor.move_right(&self.buffer);
             }
+            _ => {}
         }
     }
 

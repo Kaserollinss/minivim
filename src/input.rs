@@ -309,15 +309,30 @@ fn motion_for(c: char) -> Option<Motion> {
             location: MotionLocation::Start,
             big: false,
         }),
+        'W' => Some(Motion::Word {
+            direction: Direction::Forward,
+            location: MotionLocation::Start,
+            big: true,
+        }),
         'e' => Some(Motion::Word {
             direction: Direction::Forward,
             location: MotionLocation::End,
             big: false,
         }),
+        'E' => Some(Motion::Word {
+            direction: Direction::Forward,
+            location: MotionLocation::End,
+            big: true,
+        }),
         'b' => Some(Motion::Word {
             direction: Direction::Backward,
             location: MotionLocation::Start,
             big: false,
+        }),
+        'B' => Some(Motion::Word {
+            direction: Direction::Backward,
+            location: MotionLocation::Start,
+            big: true,
         }),
         '0' => Some(Motion::Line {
             location: MotionLocation::Start,

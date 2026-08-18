@@ -190,7 +190,14 @@ impl Editor {
         }
     }
 
-    fn handle_line_movement(&mut self, motion: Motion, _count: usize) {}
+    fn handle_line_movement(&mut self, motion: Motion, _count: usize) {
+        match motion {
+            Motion::Line { location: MotionLocation::Start } => self.cursor.to_line_start(&self.buffer),
+            Motion::Line { location: MotionLocation::End } => self.cursor.to_line_end(&self.buffer),
+            _ => {}
+
+        }
+    }
     fn handle_file_movement(&mut self, motion: Motion, _count: usize) {}
     fn handle_find_movement(&mut self, motion: Motion, _count: usize) {}
 

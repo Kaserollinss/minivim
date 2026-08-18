@@ -97,6 +97,18 @@ impl Cursor {
         let word_end_pos = get_word_end(self, buffer, direction, is_big);
         self.go_to(word_end_pos);
     }
+
+    // keeping buffer for now in case in add future checks and need buffer ref
+    pub fn to_line_start(&mut self, buffer: &Buffer){
+        self.go_to(Pos::new(self.pos.row, 0));
+    }
+
+    pub fn to_line_end(&mut self, buffer: &Buffer){
+        let line_len = buffer.line_len(self.pos.row);
+        self.go_to(Pos::new(self.pos.row, line_len));
+    }
+    //        buffer.line_len(self.pos.row);
+
     // Ignores punctuation 'W'
     //pub fn forward_word(&mut self, _buffer: &Buffer) {}
 }

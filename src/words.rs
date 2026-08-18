@@ -1,5 +1,5 @@
 use crate::buffer::Buffer;
-use crate::cursor::Cursor;
+use crate::input::MotionLocation;
 use crate::pos::Pos;
 use crate::walker::{Direction, Walker};
 
@@ -65,13 +65,20 @@ fn is_word_end(pos: Pos, buffer: &Buffer, big: bool) -> bool {
     }
 }
 
-// Holy sloppy almost certainly broken code.
-pub fn get_word_end(cursor: &mut Cursor, buffer: &Buffer, direction: Direction, is_big: bool) -> Pos {
-    let word_end_pos = Walker::default(buffer, cursor.location(), direction).skip(1).find(|&pos| is_word_end(pos, buffer, is_big));
-    if let Some(pos) = word_end_pos {pos} else {cursor.location()}
-}
+pub fn find_word(
+    buffer: &Buffer,
+    from: Pos,
+    direction: Direction,
+    location: MotionLocation,
+    big: bool,
+) -> Pos {
+    let is_target = match location {
+        MotionLocation::Start => is_word_start,
+        MotionLocation::End => is_word_end,
+    };
 
-pub fn get_word_start(cursor: &mut Cursor, buffer: &Buffer, direction: Direction, is_big: bool) -> Pos {
-    let word_start_pos = Walker::default(buffer, cursor.location(), direction).skip(1).find(|&pos| is_word_start(pos, buffer, is_big));
-    if let Some(pos) = word_start_pos {pos} else {cursor.location()}
+    Walker::default(buffer, from, direction)
+        .skip(1)
+        .find(|&pos| is_target(pos, buffer, big))
+        .unwrap_or(from)
 }

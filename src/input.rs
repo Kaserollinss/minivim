@@ -20,18 +20,15 @@ pub enum Motion {
         location: MotionLocation,
         big: bool,
     },
-    Line {
-        location: MotionLocation,
-    },
+    LineStart,
+    LineEnd,
     FirstNonBlank,
-    File {
-        location: MotionLocation,
-    },
-    /// f/t/F/T — `till` stops before the target, `backward` searches left.
+    FileEnd,
+    /// f/t/F/T — `till` stops before the target.
     Find {
         target: char,
         till: bool,
-        backward: bool,
+        direction: Direction,
     },
 }
 
@@ -54,19 +51,21 @@ impl Motion {
     pub fn kind(self) -> MotionKind {
         match self {
             // linewise
-            Motion::Up | Motion::Down | Motion::File { .. } => MotionKind::Linewise,
+            Motion::Up | Motion::Down | Motion::FileEnd => MotionKind::Linewise,
 
-            // inclusive
+            // inclusive: `de` ends on the last char of the word, `d$` on the last
+            // char of the line, and both `dfx` and `dtx` take the char they land on.
             Motion::Word {
                 location: MotionLocation::End,
                 ..
             }
-            | Motion::Line {
-                location: MotionLocation::End,
+            | Motion::LineEnd
+            | Motion::Find {
+                direction: Direction::Forward,
+                ..
             } => MotionKind::Inclusive,
 
-            // exclusive
-            Motion::Find { till: false, .. } => MotionKind::Inclusive,
+            // exclusive: `dw`, `db`, `d0`, `dFx` all stop short of the landing char.
             _ => MotionKind::Exclusive,
         }
     }
@@ -124,7 +123,7 @@ enum State {
     #[default]
     Start,
     /// Saw f/t/F/T, waiting for the character to search for.
-    AwaitingFindChar { till: bool, backward: bool },
+    AwaitingFindChar { till: bool, direction: Direction },
 }
 
 #[derive(Debug, Default)]
@@ -169,12 +168,12 @@ impl Parser {
             }
         };
 
-        if let State::AwaitingFindChar { till, backward } = self.state {
+        if let State::AwaitingFindChar { till, direction } = self.state {
             self.state = State::Start;
             return self.motion(Motion::Find {
                 target: c,
                 till,
-                backward,
+                direction,
             });
         }
 
@@ -204,7 +203,11 @@ impl Parser {
             'f' | 't' | 'F' | 'T' => {
                 self.state = State::AwaitingFindChar {
                     till: c.eq_ignore_ascii_case(&'t'),
-                    backward: c.is_ascii_uppercase(),
+                    direction: if c.is_ascii_uppercase() {
+                        Direction::Backward
+                    } else {
+                        Direction::Forward
+                    },
                 };
                 ParseResult::Pending
             }
@@ -334,16 +337,10 @@ fn motion_for(c: char) -> Option<Motion> {
             location: MotionLocation::Start,
             big: true,
         }),
-        '0' => Some(Motion::Line {
-            location: MotionLocation::Start,
-        }),
+        '0' => Some(Motion::LineStart),
         '^' => Some(Motion::FirstNonBlank),
-        '$' => Some(Motion::Line {
-            location: MotionLocation::End,
-        }),
-        'G' => Some(Motion::File {
-            location: MotionLocation::End,
-        }),
+        '$' => Some(Motion::LineEnd),
+        'G' => Some(Motion::FileEnd),
         _ => None,
     }
 }
@@ -391,7 +388,7 @@ mod tests {
         let mut p = Parser::new();
         assert_eq!(
             press(&mut p, "0"),
-            ParseResult::Complete(Action::Move(Motion::Line { location: MotionLocation::Start }, 1))
+            ParseResult::Complete(Action::Move(Motion::LineStart, 1))
         );
     }
 
@@ -463,7 +460,7 @@ mod tests {
                 Motion::Find {
                     target: 'x',
                     till: false,
-                    backward: false
+                    direction: Direction::Forward,
                 },
                 1
             ))

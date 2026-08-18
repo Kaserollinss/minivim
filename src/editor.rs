@@ -5,7 +5,7 @@ use std::path::Path;
 use crate::buffer::Buffer;
 use crate::cursor::Cursor;
 use crate::input::{
-    Action, InsertKind, Motion, Operator, ParseResult, Parser, SimpleAction, Target, MotionLocation
+    Action, InsertKind, Motion, Operator, ParseResult, Parser, SimpleAction, Target,
 };
 use crate::pos::Pos;
 use crate::terminal::Terminal;
@@ -165,41 +165,27 @@ impl Editor {
         }
     }
 
-    fn handle_movement(&mut self, motion: Motion, count: usize) {
+    fn handle_movement(&mut self, motion: Motion, _count: usize) {
         match motion {
             Motion::Left => self.cursor.move_left(),
             Motion::Right => self.cursor.move_right(&self.buffer),
             Motion::Up => self.cursor.move_up(&self.buffer),
             Motion::Down => self.cursor.move_down(&self.buffer),
+            Motion::Word {
+                direction,
+                location,
+                big,
+            } => self.cursor.to_word(&self.buffer, direction, location, big),
+            Motion::LineStart => self.cursor.to_line_start(),
+            Motion::LineEnd => self.cursor.to_line_end(&self.buffer),
             // not implemented yet
-            Motion::Word { .. } => self.handle_word_movement(motion, count),
-            Motion::Line { .. } => self.handle_line_movement(motion, count),
             Motion::FirstNonBlank => {}
-            Motion::File { .. } => self.handle_file_movement(motion, count),
-            Motion::Find { .. } => self.handle_find_movement(motion, count),
+            Motion::FileEnd => {}
+            Motion::Find { .. } => {}
         }
     }
 
     fn handle_operation(&mut self, _op: Operator, _target: Target) {}
-
-    fn handle_word_movement(&mut self, motion: Motion, _count: usize) {
-        match motion {
-            Motion::Word {location: MotionLocation::Start, direction, big} => self.cursor.to_word_start(&self.buffer, direction, big),
-            Motion::Word {location: MotionLocation::End, direction, big} => self.cursor.to_word_end(&self.buffer, direction, big),
-            _ => {}
-        }
-    }
-
-    fn handle_line_movement(&mut self, motion: Motion, _count: usize) {
-        match motion {
-            Motion::Line { location: MotionLocation::Start } => self.cursor.to_line_start(&self.buffer),
-            Motion::Line { location: MotionLocation::End } => self.cursor.to_line_end(&self.buffer),
-            _ => {}
-
-        }
-    }
-    fn handle_file_movement(&mut self, motion: Motion, _count: usize) {}
-    fn handle_find_movement(&mut self, motion: Motion, _count: usize) {}
 
     fn enter_insert(&mut self, kind: InsertKind) {
         let pos = self.cursor.location();

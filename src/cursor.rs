@@ -1,7 +1,8 @@
 use crate::buffer::Buffer;
+use crate::input::MotionLocation;
 use crate::pos::Pos;
 use crate::walker::Direction;
-use crate::words::{get_word_start, get_word_end};
+use crate::words::find_word;
 /// Cursor position in *buffer* coordinates, never screen coordinates.
 ///
 /// `View` converts to screen coordinates at draw time using its scroll offset;
@@ -88,27 +89,22 @@ impl Cursor {
         self.clamp_col(buffer);
     }
 
-    pub fn to_word_start(&mut self, buffer: &Buffer, direction: Direction, is_big: bool) {
-        let word_start_pos = get_word_start(self, buffer, direction, is_big);
-        self.go_to(word_start_pos);
+    pub fn to_word(
+        &mut self,
+        buffer: &Buffer,
+        direction: Direction,
+        location: MotionLocation,
+        big: bool,
+    ) {
+        self.go_to(find_word(buffer, self.pos, direction, location, big));
     }
 
-    pub fn to_word_end(&mut self, buffer: &Buffer, direction: Direction, is_big: bool) {
-        let word_end_pos = get_word_end(self, buffer, direction, is_big);
-        self.go_to(word_end_pos);
-    }
-
-    // keeping buffer for now in case in add future checks and need buffer ref
-    pub fn to_line_start(&mut self, buffer: &Buffer){
+    pub fn to_line_start(&mut self) {
         self.go_to(Pos::new(self.pos.row, 0));
     }
 
-    pub fn to_line_end(&mut self, buffer: &Buffer){
+    pub fn to_line_end(&mut self, buffer: &Buffer) {
         let line_len = buffer.line_len(self.pos.row);
         self.go_to(Pos::new(self.pos.row, line_len));
     }
-    //        buffer.line_len(self.pos.row);
-
-    // Ignores punctuation 'W'
-    //pub fn forward_word(&mut self, _buffer: &Buffer) {}
 }

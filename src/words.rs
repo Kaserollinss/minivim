@@ -10,7 +10,7 @@ enum CharClass {
     Punctuation,
 }
 
-pub fn classify(c: char, big: bool) -> CharClass {
+fn classify(c: char, big: bool) -> CharClass {
     match c {
         c if c.is_whitespace() => CharClass::WhiteSpace,
         c if c.is_alphanumeric() || big => CharClass::Word,
@@ -18,7 +18,7 @@ pub fn classify(c: char, big: bool) -> CharClass {
     }
 }
 
-pub fn is_word_start(pos: Pos, buffer: &Buffer, big: bool) -> bool {
+fn is_word_start(pos: Pos, buffer: &Buffer, big: bool) -> bool {
     // non whitespace
     // if big, char to left is whitespace
     // else char to left is different class
@@ -43,7 +43,7 @@ pub fn is_word_start(pos: Pos, buffer: &Buffer, big: bool) -> bool {
     }
 }
 
-pub fn is_word_end(pos: Pos, buffer: &Buffer, big: bool) -> bool {
+fn is_word_end(pos: Pos, buffer: &Buffer, big: bool) -> bool {
     let char = buffer.char_at(pos);
     let class = if let Some(char) = char {
         Some(classify(char, big))
@@ -65,6 +65,12 @@ pub fn is_word_end(pos: Pos, buffer: &Buffer, big: bool) -> bool {
     }
 }
 
-pub fn to_word_end(cursor: &mut Cursor, buffer: &Buffer, direction: Direction, is_big: bool) {}
+pub fn to_word_end(cursor: &mut Cursor, buffer: &Buffer, direction: Direction, is_big: bool) {
+    let word_end_pos = Walker::default(buffer, cursor.location(), direction).find(|&pos| is_word_end(pos, buffer, is_big));
+    if let Some(pos) = word_end_pos {cursor.go_to(pos)};
+}
 
-pub fn to_word_start(cursor: &mut Cursor, buffer: &Buffer, direction: Direction, is_big: bool) {}
+pub fn to_word_start(cursor: &mut Cursor, buffer: &Buffer, direction: Direction, is_big: bool) {
+    let word_start_pos = Walker::default(buffer, cursor.location(), direction).find(|&pos| is_word_start(pos, buffer, is_big));
+    if let Some(pos) = word_start_pos {cursor.go_to(pos)};
+}

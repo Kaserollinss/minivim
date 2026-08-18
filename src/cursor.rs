@@ -1,7 +1,7 @@
 use crate::buffer::Buffer;
 use crate::pos::Pos;
 use crate::walker::Direction;
-
+use crate::words::{get_word_start, get_word_end};
 /// Cursor position in *buffer* coordinates, never screen coordinates.
 ///
 /// `View` converts to screen coordinates at draw time using its scroll offset;
@@ -60,10 +60,6 @@ impl Cursor {
         self.pos = pos;
     }
 
-    pub fn to_word_end(mut self, buffer: &Buffer, direction: Direction, is_big: bool) {}
-
-    pub fn to_word_start(mut self, buffer: &Buffer, direction: Direction, is_big: bool) {}
-
     /// Honor desired_col on the current line, clamping to what the line allows.
     fn restore_col(&mut self, buffer: &Buffer) {
         self.pos.col = self.desired_col.min(buffer.line_len(self.pos.row));
@@ -92,6 +88,15 @@ impl Cursor {
         self.clamp_col(buffer);
     }
 
+    pub fn to_word_start(&mut self, buffer: &Buffer, direction: Direction, is_big: bool) {
+        let word_start_pos = get_word_start(self, buffer, direction, is_big);
+        self.go_to(word_start_pos);
+    }
+
+    pub fn to_word_end(&mut self, buffer: &Buffer, direction: Direction, is_big: bool) {
+        let word_end_pos = get_word_end(self, buffer, direction, is_big);
+        self.go_to(word_end_pos);
+    }
     // Ignores punctuation 'W'
     //pub fn forward_word(&mut self, _buffer: &Buffer) {}
 }

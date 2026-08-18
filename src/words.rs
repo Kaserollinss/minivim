@@ -65,12 +65,13 @@ fn is_word_end(pos: Pos, buffer: &Buffer, big: bool) -> bool {
     }
 }
 
-pub fn to_word_end(cursor: &mut Cursor, buffer: &Buffer, direction: Direction, is_big: bool) {
-    let word_end_pos = Walker::default(buffer, cursor.location(), direction).find(|&pos| is_word_end(pos, buffer, is_big));
-    if let Some(pos) = word_end_pos {cursor.go_to(pos)};
+// Holy sloppy almost certainly broken code.
+pub fn get_word_end(cursor: &mut Cursor, buffer: &Buffer, direction: Direction, is_big: bool) -> Pos {
+    let word_end_pos = Walker::default(buffer, cursor.location(), direction).skip(1).find(|&pos| is_word_end(pos, buffer, is_big));
+    if let Some(pos) = word_end_pos {pos} else {cursor.location()}
 }
 
-pub fn to_word_start(cursor: &mut Cursor, buffer: &Buffer, direction: Direction, is_big: bool) {
-    let word_start_pos = Walker::default(buffer, cursor.location(), direction).find(|&pos| is_word_start(pos, buffer, is_big));
-    if let Some(pos) = word_start_pos {cursor.go_to(pos)};
+pub fn get_word_start(cursor: &mut Cursor, buffer: &Buffer, direction: Direction, is_big: bool) -> Pos {
+    let word_start_pos = Walker::default(buffer, cursor.location(), direction).skip(1).find(|&pos| is_word_start(pos, buffer, is_big));
+    if let Some(pos) = word_start_pos {pos} else {cursor.location()}
 }

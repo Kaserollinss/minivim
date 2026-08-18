@@ -5,7 +5,7 @@ use std::path::Path;
 use crate::buffer::Buffer;
 use crate::cursor::Cursor;
 use crate::input::{
-    Action, InsertKind, Motion, Operator, ParseResult, Parser, SimpleAction, Target,
+    Action, InsertKind, Motion, Operator, ParseResult, Parser, SimpleAction, Target, MotionLocation
 };
 use crate::pos::Pos;
 use crate::terminal::Terminal;
@@ -184,9 +184,12 @@ impl Editor {
 
     fn handle_word_movement(&mut self, motion: Motion, _count: usize) {
         match motion {
+            Motion::Word {location: MotionLocation::Start, direction, big} => self.cursor.to_word_start(&self.buffer, direction, big),
+            Motion::Word {location: MotionLocation::End, direction, big} => self.cursor.to_word_end(&self.buffer, direction, big),
             _ => {}
         }
     }
+
     fn handle_line_movement(&mut self, motion: Motion, _count: usize) {}
     fn handle_file_movement(&mut self, motion: Motion, _count: usize) {}
     fn handle_find_movement(&mut self, motion: Motion, _count: usize) {}

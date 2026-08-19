@@ -188,9 +188,11 @@ impl Editor {
 
         match kind {
             InsertKind::Before => {}
-            InsertKind::After => {}
-            InsertKind::LineStart => {}
-            InsertKind::LineEnd => {}
+            InsertKind::After => self.cursor.move_right(&self.buffer),
+            InsertKind::LineStart => self
+                .cursor
+                .go_to(Pos::new(pos.row, self.buffer.line_len(pos.row) - 1)),
+            InsertKind::LineEnd => self.cursor.go_to(Pos::new(pos.row, 0)),
             InsertKind::OpenBelow => self.new_line_below(pos.row),
             InsertKind::OpenAbove => self.new_line_above(pos.row),
         }

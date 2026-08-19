@@ -46,6 +46,7 @@ impl Editor {
         })
     }
     pub fn run(&mut self) {
+        dbg_log!("editor started");
         Terminal::initialize();
         self.view.render(&self.buffer, &self.cursor);
         let result = self.repl();
@@ -166,7 +167,14 @@ impl Editor {
             Motion::LineEnd => self.cursor.to_line_end(&self.buffer),
             // not implemented yet
             Motion::FirstNonBlank => {}
-            Motion::FileEnd => {}
+            Motion::FileEnd => {
+                let last_line = self.buffer.line(self.buffer.len() - 2);
+                if let Some(last_line) = last_line {
+                    self.cursor
+                        .go_to(Pos::new(self.buffer.len() - 1, last_line.len() - 1))
+                }
+            }
+            Motion::FileStart => self.cursor.go_to(Pos::new(0, 0)),
             Motion::Find { .. } => {}
         }
     }

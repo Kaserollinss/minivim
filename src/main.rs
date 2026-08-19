@@ -1,3 +1,5 @@
+#[macro_use]
+mod debug;
 mod buffer;
 mod cursor;
 mod editor;

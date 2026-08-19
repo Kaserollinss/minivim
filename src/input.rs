@@ -24,6 +24,7 @@ pub enum Motion {
     LineEnd,
     FirstNonBlank,
     FileEnd,
+    FileStart,
     /// f/t/F/T — `till` stops before the target.
     Find {
         target: char,
@@ -51,7 +52,7 @@ impl Motion {
     pub fn kind(self) -> MotionKind {
         match self {
             // linewise
-            Motion::Up | Motion::Down | Motion::FileEnd => MotionKind::Linewise,
+            Motion::Up | Motion::Down | Motion::FileEnd | Motion::FileStart => MotionKind::Linewise,
 
             // inclusive: `de` ends on the last char of the word, `d$` on the last
             // char of the line, and both `dfx` and `dtx` take the char they land on.

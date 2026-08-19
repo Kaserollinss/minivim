@@ -103,11 +103,29 @@ impl Editor {
                 self.mode = Mode::Normal;
                 Terminal::set_cursor_block();
             }
-            KeyCode::Backspace => {
-                //Broken. Time to actually figure out the byte vs char index stuff
-                self.buffer.remove_char_at(pos);
-            }
-            KeyCode::Delete => {}
+            KeyCode::Backspace => match pos.col {
+                0 => {
+                    let end_of_target_line = self.buffer.line_len(pos.row - 1);
+                    self.buffer.append_lines(pos.row, pos.row - 1);
+                    self.cursor.go_to(Pos::new(pos.row - 1, end_of_target_line));
+                }
+                _ => {
+                    self.buffer.remove_char_at(Pos::new(pos.row, pos.col - 1));
+                    // move the cursor back one position
+                    self.cursor.move_left();
+                }
+            },
+            // when on pos col: 0 you shouldn't delete the entire line.
+            KeyCode::Delete => match pos.col {
+                col if col == self.buffer.line_len(pos.row) => {
+                    let end_of_target_line = self.buffer.line_len(pos.row);
+                    self.buffer.append_lines(pos.row + 1, pos.row);
+                    self.cursor.go_to(Pos::new(pos.row, end_of_target_line));
+                }
+                _ => {
+                    self.buffer.remove_char_at(Pos::new(pos.row, pos.col));
+                }
+            },
             KeyCode::Enter => self.new_line_below(pos.row),
             KeyCode::Left => self.cursor.move_left(),
             KeyCode::Right => self.cursor.move_right(&self.buffer),

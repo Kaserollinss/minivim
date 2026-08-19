@@ -58,6 +58,12 @@ impl Buffer {
         }
     }
 
+    pub fn remove_line_at(&mut self, row: usize) {
+        if self.line_len(row) >= row {
+            self.lines.remove(row);
+        }
+    }
+
     pub fn remove_char_at(&mut self, pos: Pos) {
         let line = self.lines.get_mut(pos.row);
         match line {
@@ -72,6 +78,23 @@ impl Buffer {
         if self.len() > row {
             self.lines.insert(row, String::new())
         }
+    }
+
+    pub fn append_lines(&mut self, removed_row: usize, target_row: usize) {
+        if removed_row >= self.lines.len() || target_row >= self.lines.len() {
+            return;
+        }
+
+        let removed_line = self.lines.remove(removed_row);
+
+        // We've removed a row so indexes might have shifted
+        let target_row = if removed_row < target_row {
+            target_row - 1
+        } else {
+            target_row
+        };
+
+        self.lines[target_row].push_str(&removed_line);
     }
 
     // pub fn new_line_below(&mut self, row: usize) {

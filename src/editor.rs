@@ -177,7 +177,9 @@ impl Editor {
             Motion::FileStart => self.cursor.go_to(Pos::new(0, 0)),
             // only searches same line. Can combine with counts and actions. 3fx goes to the third x
             // in the line. d3fx will delete everything from starting position to 3rd c
-            Motion::Find { .. } => {}
+            Motion::Find { target, till, direction } => {
+                self.cursor.walk_to_char(&self.buffer, self.cursor.location(), target, till, direction);                
+            }
         }
     }
 

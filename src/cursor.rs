@@ -1,7 +1,7 @@
 use crate::buffer::Buffer;
 use crate::input::MotionLocation;
 use crate::pos::Pos;
-use crate::walker::Direction;
+use crate::walker::{Direction, Walker};
 use crate::words::find_word;
 /// Cursor position in *buffer* coordinates, never screen coordinates.
 ///
@@ -106,5 +106,22 @@ impl Cursor {
     pub fn to_line_end(&mut self, buffer: &Buffer) {
         let line_len = buffer.line_len(self.pos.row);
         self.go_to(Pos::new(self.pos.row, line_len));
+    }
+
+    pub fn walk_to_char(&mut self, buffer: &Buffer, from: Pos, c: char, till: bool, direction: Direction) {
+        let target_pos = Walker::default(buffer, from, direction).skip(1).find(|&pos| Self::is_target_char(buffer, pos, c));
+        if let Some(pos) = target_pos {
+            self.go_to(pos)
+        }else {
+            // NO-OP
+        }
+    }
+
+    pub fn is_target_char(buffer: &Buffer, pos: Pos, target_char: char/* , _count: u32*/) -> bool {
+        if let Some(c) = buffer.char_at(pos){
+            target_char == c
+        }else {
+            false
+        }
     }
 }

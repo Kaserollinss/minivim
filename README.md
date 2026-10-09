@@ -30,9 +30,8 @@ The parser gets these but the editor doesn't do anything with them yet.
 
 ### Bugs
 
-- [ ] `I` and `A` are backwards in `enter_insert`
-- [ ] `G` checks the wrong line and underflows on a one-line buffer.
-  `g_moves_to_last_line` is `#[ignore]`d until this is fixed.
+- [x] `I` and `A` are backwards in `enter_insert`
+- [x] `G` checks the wrong line and underflows on a one-line buffer
 - [ ] `^` match arm is empty
 - [ ] `gg` isn't parsed so `Motion::FileStart` never gets hit
 - [ ] `$` lands on the end-of-line slot instead of the last char

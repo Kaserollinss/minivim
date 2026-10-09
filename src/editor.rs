@@ -168,11 +168,8 @@ impl Editor {
             // not implemented yet
             Motion::FirstNonBlank => {}
             Motion::FileEnd => {
-                let last_line = self.buffer.line(self.buffer.len() - 2);
-                if let Some(last_line) = last_line {
-                    self.cursor
-                        .go_to(Pos::new(self.buffer.len() - 1, last_line.len() - 1))
-                }
+                let last_row = self.buffer.len().saturating_sub(1);
+                self.cursor.go_to(Pos::new(last_row, 0));
             }
             Motion::FileStart => self.cursor.go_to(Pos::new(0, 0)),
             // only searches same line. Can combine with counts and actions. 3fx goes to the third x
@@ -193,10 +190,8 @@ impl Editor {
         match kind {
             InsertKind::Before => {}
             InsertKind::After => self.cursor.move_right(&self.buffer),
-            InsertKind::LineStart => self
-                .cursor
-                .go_to(Pos::new(pos.row, self.buffer.line_len(pos.row) - 1)),
-            InsertKind::LineEnd => self.cursor.go_to(Pos::new(pos.row, 0)),
+            InsertKind::LineStart => self.cursor.to_line_start(),
+            InsertKind::LineEnd => self.cursor.to_line_end(&self.buffer),
             InsertKind::OpenBelow => self.new_line_below(pos.row),
             InsertKind::OpenAbove => self.new_line_above(pos.row),
         }
@@ -407,12 +402,17 @@ mod tests {
     // --- file motions: G ---
 
     #[test]
-    #[ignore = "G handler is buggy: reads the len-2 line for its length and underflows \
-                on single-line buffers. Fix editor.rs:170 (Motion::FileEnd) then unignore."]
     fn g_moves_to_last_line() {
         let mut editor = editor_with(&["aaaa", "bb", "cccc"]);
         press(&mut editor, 'G');
         // should land on the last line at col 0
         assert_eq!((editor.cursor.row(), editor.cursor.col()), (2, 0));
+    }
+
+    #[test]
+    fn g_on_single_line_buffer_stays_on_line() {
+        let mut editor = editor_with(&["aaaa"]);
+        press(&mut editor, 'G');
+        assert_eq!((editor.cursor.row(), editor.cursor.col()), (0, 0));
     }
 }
